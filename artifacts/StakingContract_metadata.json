@@ -1,0 +1,356 @@
+{
+	"compiler": {
+		"version": "0.8.34+commit.80d5c536"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_stakingToken",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "EmergencyWithdraw",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "reward",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "RewardClaimed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "Staked",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "Unstaked",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "REWARD_RATE_PER_SECOND",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "claimReward",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "contractBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "emergencyWithdraw",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "fundRewards",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					}
+				],
+				"name": "getStakeInfo",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "stakedAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "pendingReward",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "stakedSince",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalRewardEarned",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "stake",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "stakes",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "stakedAt",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "rewardDebt",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "pendingReward",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "stakingToken",
+				"outputs": [
+					{
+						"internalType": "contract IERC20",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalStaked",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "unstake",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"contractBalance()": {
+					"notice": "컨트랙트가 보유한 토큰 (보상 재원)"
+				},
+				"fundRewards(uint256)": {
+					"notice": "컨트랙트에 보상용 토큰을 추가 deposit"
+				},
+				"getStakeInfo(address)": {
+					"notice": "내 스테이킹 정보 한눈에 조회"
+				},
+				"stake(uint256)": {
+					"notice": "사전에 approve(stakingContract, amount) 를 호출해야 함"
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"StakingContract.sol": "StakingContract"
+		},
+		"evmVersion": "osaka",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"StakingContract.sol": {
+			"keccak256": "0x31a13ab522b104faa34b205fb8027d520f6cebba8fea189e6993e32d5336fc2b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://4bc61ba4c6ff15ad72a4e6a831e3043511e174ca270668591ecc7cb708839ef0",
+				"dweb:/ipfs/Qmb7UBSnz8fLtuBEGrbqDG7zfW8xHqVVa56F4wiFKd2jj2"
+			]
+		}
+	},
+	"version": 1
+}
