@@ -1,0 +1,239 @@
+
+<h2 class="sr-only">Blockchain Lab #7 실습 가이드 — ERC-20 & Staking Contract 배포 단계별 안내</h2>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+  .code-block { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; padding: 12px 14px; border-radius: 8px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); overflow-x: auto; white-space: pre; color: var(--color-text-primary); }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 12px; padding: 16px 20px; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 14px; }
+  .hash-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .hash-row:last-child { border-bottom: none; }
+  .fn-chip { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 8px; border-radius: 5px; border: 0.5px solid; }
+</style>
+
+<div style="padding: 1.5rem 0 2rem;">
+
+  <!-- 헤더 -->
+  <div style="margin-bottom: 2rem;">
+    <p style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px;">Blockchain Lab #7 · Kookmin University</p>
+    <h1 style="font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px;">ERC-20 & Staking Contract 실습 가이드</h1>
+    <p style="font-size: 14px; color: var(--color-text-secondary);">Remix IDE → Sepolia 테스트넷 배포 · 제출 트랜잭션 확인</p>
+  </div>
+
+  <!-- 전체 흐름 -->
+  <div class="card" style="margin-bottom: 1.25rem;">
+    <p class="section-title">전체 배포 흐름</p>
+    <div style="display: flex; align-items: center; gap: 0; flex-wrap: wrap; gap: 6px;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <div style="padding: 6px 14px; border-radius: 8px; background: var(--color-background-info); border: 0.5px solid var(--color-border-info); font-size: 13px; color: var(--color-text-info); font-weight: 500;">KMUToken 배포</div>
+        <span style="font-size: 11px; color: var(--color-text-tertiary);">토큰 주소 복사</span>
+      </div>
+      <div style="color: var(--color-text-tertiary); font-size: 18px; padding: 0 4px;">→</div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <div style="padding: 6px 14px; border-radius: 8px; background: var(--color-background-success); border: 0.5px solid var(--color-border-success); font-size: 13px; color: var(--color-text-success); font-weight: 500;">StakingContract 배포</div>
+        <span style="font-size: 11px; color: var(--color-text-tertiary);">토큰주소 입력</span>
+      </div>
+      <div style="color: var(--color-text-tertiary); font-size: 18px; padding: 0 4px;">→</div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <div style="padding: 6px 14px; border-radius: 8px; background: var(--color-background-warning); border: 0.5px solid var(--color-border-warning); font-size: 13px; color: var(--color-text-warning); font-weight: 500;">approve()</div>
+        <span style="font-size: 11px; color: var(--color-text-tertiary);">사용 허가</span>
+      </div>
+      <div style="color: var(--color-text-tertiary); font-size: 18px; padding: 0 4px;">→</div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <div style="padding: 6px 14px; border-radius: 8px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); font-size: 13px; color: var(--color-text-primary); font-weight: 500;">stake()</div>
+        <span style="font-size: 11px; color: var(--color-text-tertiary);">토큰 예치</span>
+      </div>
+      <div style="color: var(--color-text-tertiary); font-size: 18px; padding: 0 4px;">→</div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <div style="padding: 6px 14px; border-radius: 8px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); font-size: 13px; color: var(--color-text-primary); font-weight: 500;">unstake()</div>
+        <span style="font-size: 11px; color: var(--color-text-tertiary);">토큰 출금</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+      <div class="step-num" style="background: var(--color-background-info); color: var(--color-text-info);">1</div>
+      <div>
+        <p style="font-size: 15px; font-weight: 500; color: var(--color-text-primary);">KMUToken 배포</p>
+        <p style="font-size: 12px; color: var(--color-text-secondary);">Remix IDE에서 KMUToken 컨트랙트 선택 후 배포</p>
+      </div>
+    </div>
+    <div class="code-block">// Remix IDE 설정
+Compiler: 0.8.20+commit
+Environment: Injected Provider - MetaMask
+Network: Sepolia Testnet
+
+// 배포 후 콘솔에서 복사
+KMUToken address: 0xYOUR_TOKEN_ADDRESS</div>
+    <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+      <span class="badge" style="background: var(--color-background-success); color: var(--color-text-success);">1,000,000 KMU 자동 발행</span>
+      <span class="badge" style="background: var(--color-background-info); color: var(--color-text-info);">faucet() 으로 추가 수령 가능</span>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+      <div class="step-num" style="background: var(--color-background-success); color: var(--color-text-success);">2</div>
+      <div>
+        <p style="font-size: 15px; font-weight: 500; color: var(--color-text-primary);">StakingContract 배포</p>
+        <p style="font-size: 12px; color: var(--color-text-secondary);">배포 시 KMUToken 주소를 생성자 인자로 입력</p>
+      </div>
+    </div>
+    <div class="code-block">// Deploy 탭 → Deploy 버튼 옆 입력란에:
+_stakingToken: "0xYOUR_TOKEN_ADDRESS"
+
+// 배포 완료 후 복사
+StakingContract address: 0xYOUR_STAKING_ADDRESS</div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+      <div class="step-num" style="background: var(--color-background-warning); color: var(--color-text-warning);">3</div>
+      <div>
+        <p style="font-size: 15px; font-weight: 500; color: var(--color-text-primary);">approve() 호출</p>
+        <p style="font-size: 12px; color: var(--color-text-secondary);">KMUToken 컨트랙트에서 스테이킹 컨트랙트에 사용 허가</p>
+      </div>
+    </div>
+    <div class="code-block">// KMUToken 컨트랙트 → approve 함수
+spender: "0xYOUR_STAKING_ADDRESS"
+amount:  "100000000000000000000"   // 100 KMU (18 decimals)
+
+// approve 완료 → Etherscan에서 트랜잭션 확인</div>
+    <div style="margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--color-background-warning); border: 0.5px solid var(--color-border-warning);">
+      <p style="font-size: 12px; color: var(--color-text-warning);">approve 없이 stake() 호출 시 <span class="mono">ERC20: insufficient allowance</span> 에러 발생</p>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+      <div class="step-num" style="background: var(--color-background-secondary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary);">4</div>
+      <div>
+        <p style="font-size: 15px; font-weight: 500; color: var(--color-text-primary);">stake() / unstake() 호출</p>
+        <p style="font-size: 12px; color: var(--color-text-secondary);">스테이킹 컨트랙트에서 실행 — 제출용 트랜잭션 해시 획득</p>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div>
+        <p style="font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 6px;">stake(amount)</p>
+        <div class="code-block" style="font-size: 11px;">amount: "100000000000000000000"
+// 100 KMU</div>
+      </div>
+      <div>
+        <p style="font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 6px;">unstake(amount)</p>
+        <div class="code-block" style="font-size: 11px;">amount: "50000000000000000000"
+// 50 KMU</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 컨트랙트 함수 요약 -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <p class="section-title">컨트랙트 주요 함수</p>
+    <div style="display: grid; gap: 8px;">
+      <div class="hash-row">
+        <span class="fn-chip" style="background: var(--color-background-info); border-color: var(--color-border-info); color: var(--color-text-info);">stake(uint256)</span>
+        <span style="font-size: 13px; color: var(--color-text-secondary);">토큰 예치 — approve 선행 필수</span>
+      </div>
+      <div class="hash-row">
+        <span class="fn-chip" style="background: var(--color-background-danger); border-color: var(--color-border-danger); color: var(--color-text-danger);">unstake(uint256)</span>
+        <span style="font-size: 13px; color: var(--color-text-secondary);">예치 토큰 일부/전체 출금</span>
+      </div>
+      <div class="hash-row">
+        <span class="fn-chip" style="background: var(--color-background-success); border-color: var(--color-border-success); color: var(--color-text-success);">claimReward()</span>
+        <span style="font-size: 13px; color: var(--color-text-secondary);">누적 보상 토큰 수령</span>
+      </div>
+      <div class="hash-row">
+        <span class="fn-chip" style="background: var(--color-background-warning); border-color: var(--color-border-warning); color: var(--color-text-warning);">emergencyWithdraw()</span>
+        <span style="font-size: 13px; color: var(--color-text-secondary);">보상 포기 후 원금 즉시 회수</span>
+      </div>
+      <div class="hash-row">
+        <span class="fn-chip" style="background: var(--color-background-secondary); border-color: var(--color-border-secondary); color: var(--color-text-primary);">getStakeInfo(address)</span>
+        <span style="font-size: 13px; color: var(--color-text-secondary);">예치량 / 미수령 보상 / 총 수령 조회</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 제출 체크리스트 -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <p class="section-title">제출 요구사항 체크리스트</p>
+    <div id="checklist" style="display: grid; gap: 8px;"></div>
+  </div>
+
+  <!-- 보상 계산기 -->
+  <div class="card">
+    <p class="section-title">보상 시뮬레이터</p>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+      <label style="font-size: 13px; color: var(--color-text-secondary); min-width: 70px;">스테이킹량</label>
+      <input type="range" min="10" max="10000" value="100" step="10" id="stakeAmt" style="flex: 1;" />
+      <span class="mono" style="font-size: 13px; min-width: 72px; text-align: right;" id="stakeAmtOut">100 KMU</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+      <label style="font-size: 13px; color: var(--color-text-secondary); min-width: 70px;">기간 (시간)</label>
+      <input type="range" min="1" max="168" value="24" step="1" id="hours" style="flex: 1;" />
+      <span class="mono" style="font-size: 13px; min-width: 72px; text-align: right;" id="hoursOut">24 h</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div style="background: var(--color-background-secondary); border-radius: 8px; padding: 12px;">
+        <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px;">예상 보상</p>
+        <p class="mono" style="font-size: 22px; font-weight: 500;" id="rewardOut">0.000360 KMU</p>
+      </div>
+      <div style="background: var(--color-background-secondary); border-radius: 8px; padding: 12px;">
+        <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px;">연환산 APR</p>
+        <p class="mono" style="font-size: 22px; font-weight: 500;" id="aprOut">3.15%</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const items = [
+  { label: "컨트랙트 소스코드 또는 GitHub URL", done: false },
+  { label: "배포 트랜잭션 해시 (KMUToken)", done: false },
+  { label: "배포 트랜잭션 해시 (StakingContract)", done: false },
+  { label: "stake() 트랜잭션 해시 (최소 1개)", done: false },
+  { label: "unstake() 트랜잭션 해시 (최소 1개)", done: false },
+];
+
+const cl = document.getElementById('checklist');
+items.forEach((item, i) => {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer;';
+  row.innerHTML = `<div id="chk-${i}" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--color-border-secondary);flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div><span id="lbl-${i}" style="font-size:13px;color:var(--color-text-primary);">${item.label}</span>`;
+  row.addEventListener('click', () => {
+    item.done = !item.done;
+    document.getElementById(`chk-${i}`).style.background = item.done ? 'var(--color-background-success)' : '';
+    document.getElementById(`chk-${i}`).style.borderColor = item.done ? 'var(--color-border-success)' : 'var(--color-border-secondary)';
+    document.getElementById(`chk-${i}`).innerHTML = item.done ? '<svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" stroke="var(--color-text-success)" stroke-width="1.5" fill="none"/></svg>' : '';
+    document.getElementById(`lbl-${i}`).style.color = item.done ? 'var(--color-text-success)' : 'var(--color-text-primary)';
+    document.getElementById(`lbl-${i}`).style.textDecoration = item.done ? 'line-through' : 'none';
+  });
+  cl.appendChild(row);
+});
+
+const RATE = 1e12;
+function calc() {
+  const amt = parseInt(document.getElementById('stakeAmt').value);
+  const hrs = parseInt(document.getElementById('hours').value);
+  document.getElementById('stakeAmtOut').textContent = amt + ' KMU';
+  document.getElementById('hoursOut').textContent = hrs + ' h';
+  const secs = hrs * 3600;
+  const reward = (amt * secs * RATE) / 1e18;
+  const apr = (RATE * 365 * 24 * 3600 / 1e18) * 100;
+  document.getElementById('rewardOut').textContent = reward.toFixed(6) + ' KMU';
+  document.getElementById('aprOut').textContent = apr.toFixed(2) + '%';
+}
+document.getElementById('stakeAmt').addEventListener('input', calc);
+document.getElementById('hours').addEventListener('input', calc);
+calc();
+</script>
