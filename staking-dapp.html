@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KMU Staking DApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+<style>
+  /* ── 리셋 & 변수 ─────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0a0c0f;
+    --surface:  #111318;
+    --surface2: #181c23;
+    --border:   rgba(255,255,255,0.07);
+    --border2:  rgba(255,255,255,0.13);
+    --accent:   #00e5a0;
+    --accent2:  #005c41;
+    --warn:     #f5a623;
+    --danger:   #e05c5c;
+    --text:     #e8eaf0;
+    --muted:    #6b7280;
+    --mono:     'IBM Plex Mono', monospace;
+    --sans:     'Noto Sans KR', sans-serif;
+    --display:  'Bebas Neue', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── 배경 그리드 ─────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── 레이아웃 ─────────────────────────────── */
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ── 헤더 ─────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+    position: sticky;
+    top: 0;
+    background: rgba(10,12,15,0.9);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 860px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 1;
+  }
+  .logo { font-family: var(--display); font-size: 28px; letter-spacing: 2px; color: var(--accent); }
+  .logo span { color: var(--text); }
+
+  /* ── 버튼 공통 ───────────────────────────── */
+  .btn {
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 9px 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:active { transform: scale(0.97); }
+  .btn-accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 500;
+  }
+  .btn-accent:hover { background: #00c98a; border-color: #00c98a; color: #000; }
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: rgba(224,92,92,0.1); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* ── 카드 ─────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .card-value {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .card-value.accent { color: var(--accent); }
+
+  /* ── 인풋 ─────────────────────────────────── */
+  .input-group { display: flex; gap: 8px; }
+  .input-group input {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-group input:focus { border-color: var(--accent); }
+  .input-group input::placeholder { color: var(--muted); }
+
+  /* ── 히어로 섹션 ──────────────────────────── */
+  .hero {
+    padding: 60px 0 40px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-size: clamp(52px, 10vw, 88px);
+    letter-spacing: 4px;
+    line-height: 0.95;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero p { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+
+  /* ── 지갑 연결 배너 ───────────────────────── */
+  #connect-banner {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 16px; padding: 48px;
+    border: 1px dashed var(--border2);
+    border-radius: 12px;
+    margin-bottom: 32px;
+  }
+  #connect-banner p { color: var(--muted); font-size: 13px; }
+
+  /* ── 스탯 그리드 ──────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  /* ── 탭 ───────────────────────────────────── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .tab.active {
+    background: var(--surface2);
+    border-color: var(--border2);
+    color: var(--accent);
+  }
+  .tab:hover:not(.active) { color: var(--text); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── 트랜잭션 로그 ────────────────────────── */
+  .tx-log {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .tx-item { padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-item a { color: var(--accent); text-decoration: none; }
+  .tx-item a:hover { text-decoration: underline; }
+  .tx-item .tag {
+    display: inline-block; padding: 1px 6px;
+    border-radius: 3px; font-size: 10px; margin-right: 6px;
+  }
+  .tag-stake   { background: rgba(0,229,160,0.15); color: var(--accent); }
+  .tag-unstake { background: rgba(245,166,35,0.15); color: var(--warn); }
+  .tag-claim   { background: rgba(96,165,250,0.15); color: #60a5fa; }
+  .tag-emergency { background: rgba(224,92,92,0.15); color: var(--danger); }
+  .tag-deploy  { background: rgba(168,85,247,0.15); color: #a855f7; }
+
+  /* ── 주소 표시 ────────────────────────────── */
+  .addr {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    word-break: break-all;
+  }
+  .addr-short {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    color: var(--accent);
+  }
+
+  /* ── 알림 토스트 ──────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 32px; right: 32px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    max-width: 340px;
+    word-break: break-all;
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { border-color: var(--accent); }
+  #toast.error   { border-color: var(--danger); }
+
+  /* ── 섹션 ─────────────────────────────────── */
+  section { margin-bottom: 32px; }
+  .section-head {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── 컨트랙트 주소 입력 ───────────────────── */
+  .addr-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 600px) { .addr-inputs { grid-template-columns: 1fr; } }
+  .addr-field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 5px;
+    letter-spacing: 0.05em;
+  }
+  .addr-field input {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    outline: none;
+  }
+  .addr-field input:focus { border-color: var(--accent); }
+
+  /* ── 진행 스피너 ──────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,229,160,0.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── 풋터 ─────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+    margin-top: 40px;
+  }
+
+  /* ── 반응형 ───────────────────────────────── */
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .hero h1 { font-size: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── 헤더 ─────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="logo">KMU<span>STAKE</span></div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="network-badge" style="font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:4px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);color:var(--accent);display:none;"></span>
+      <span id="wallet-addr" class="addr-short" style="display:none;"></span>
+      <button class="btn btn-accent" id="btn-connect" onclick="connectWallet()">지갑 연결</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── 히어로 ─────────────────────────────────────── -->
+<div class="wrap">
+  <div class="hero">
+    <h1>STAKE &<br><em>EARN</em></h1>
+    <p>Blockchain Lab #7 · Kookmin University · ERC-20 Staking Contract</p>
+  </div>
+
+  <!-- 지갑 미연결 배너 -->
+  <div id="connect-banner">
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <rect width="40" height="40" rx="8" fill="rgba(0,229,160,0.08)" stroke="rgba(0,229,160,0.2)"/>
+      <path d="M8 14h24v16H8V14zm0 0l12 9 12-9" stroke="#00e5a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    <p>MetaMask를 연결해서 스테이킹을 시작하세요</p>
+    <button class="btn btn-accent" onclick="connectWallet()">MetaMask 연결</button>
+  </div>
+
+  <!-- 컨트랙트 주소 입력 -->
+  <section id="addr-section">
+    <div class="section-head">컨트랙트 주소 설정</div>
+    <div class="addr-inputs">
+      <div class="addr-field">
+        <label>KMU TOKEN ADDRESS</label>
+        <input type="text" id="inp-token" placeholder="0x..." />
+      </div>
+      <div class="addr-field">
+        <label>STAKING CONTRACT ADDRESS</label>
+        <input type="text" id="inp-staking" placeholder="0x..." />
+      </div>
+    </div>
+    <button class="btn btn-accent" onclick="loadContracts()">컨트랙트 불러오기</button>
+  </section>
+
+  <!-- 메인 DApp (로드 후 표시) -->
+  <div id="dapp-main" style="display:none;">
+
+    <!-- 스탯 카드 -->
+    <section>
+      <div class="section-head">내 현황</div>
+      <div class="stats-grid">
+        <div class="card">
+          <div class="card-label">지갑 잔액</div>
+          <div class="card-value" id="stat-balance">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">KMU</div>
+        </div>
+        <div class="card">
+          <div class="card-label">스테이킹 중</div>
+          <div class="card-value accent" id="stat-staked">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">KMU</div>
+        </div>
+        <div class="card">
+          <div class="card-label">미수령 보상</div>
+          <div class="card-value" id="stat-reward" style="color:var(--warn);">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">KMU</div>
+        </div>
+        <div class="card">
+          <div class="card-label">총 수령 보상</div>
+          <div class="card-value" id="stat-total-reward">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">KMU</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn" onclick="refreshStats()">↻ 새로고침</button>
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">전체 스테이킹: <span id="stat-total-staked">—</span> KMU</span>
+      </div>
+    </section>
+
+    <!-- 액션 탭 -->
+    <section>
+      <div class="section-head">스테이킹 액션</div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('stake')">STAKE</button>
+        <button class="tab" onclick="switchTab('unstake')">UNSTAKE</button>
+        <button class="tab" onclick="switchTab('claim')">CLAIM REWARD</button>
+        <button class="tab" onclick="switchTab('emergency')">EMERGENCY</button>
+        <button class="tab" onclick="switchTab('faucet')">FAUCET</button>
+      </div>
+
+      <!-- STAKE -->
+      <div class="tab-panel active" id="panel-stake">
+        <div class="card">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+            토큰을 컨트랙트에 예치합니다. <code style="font-family:var(--mono);color:var(--accent);">approve()</code> → <code style="font-family:var(--mono);color:var(--accent);">stake()</code> 순서로 진행됩니다.
+          </p>
+          <div class="input-group">
+            <input type="number" id="inp-stake-amt" placeholder="스테이킹할 KMU 수량" min="0" step="1" />
+            <button class="btn btn-accent" onclick="doStake()">STAKE →</button>
+          </div>
+          <p style="font-size:11px;color:var(--muted);margin-top:10px;font-family:var(--mono);">approve 트랜잭션 1회 + stake 트랜잭션 1회 = 총 2번 서명</p>
+        </div>
+      </div>
+
+      <!-- UNSTAKE -->
+      <div class="tab-panel" id="panel-unstake">
+        <div class="card">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+            예치된 토큰을 출금합니다. 누적 보상은 유지됩니다.
+          </p>
+          <div class="input-group">
+            <input type="number" id="inp-unstake-amt" placeholder="출금할 KMU 수량" min="0" step="1" />
+            <button class="btn" style="border-color:var(--warn);color:var(--warn);" onclick="doUnstake()">UNSTAKE ←</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLAIM -->
+      <div class="tab-panel" id="panel-claim">
+        <div class="card">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+            누적된 보상 토큰을 지갑으로 수령합니다.
+          </p>
+          <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">수령 가능 보상</span>
+            <span style="font-family:var(--mono);font-size:18px;color:var(--warn);" id="claim-preview">—</span>
+          </div>
+          <button class="btn" style="border-color:#60a5fa;color:#60a5fa;" onclick="doClaim()">CLAIM REWARD ↗</button>
+        </div>
+      </div>
+
+      <!-- EMERGENCY -->
+      <div class="tab-panel" id="panel-emergency">
+        <div class="card" style="border-color:rgba(224,92,92,0.3);">
+          <p style="font-size:13px;color:var(--danger);margin-bottom:6px;font-weight:500;">⚠ 긴급 출금</p>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+            보상을 포기하고 원금 전액을 즉시 회수합니다. 이 작업은 되돌릴 수 없습니다.
+          </p>
+          <button class="btn btn-danger" onclick="doEmergency()">EMERGENCY WITHDRAW</button>
+        </div>
+      </div>
+
+      <!-- FAUCET -->
+      <div class="tab-panel" id="panel-faucet">
+        <div class="card">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+            테스트용 KMU 토큰 1,000개를 무료로 받습니다.
+          </p>
+          <button class="btn btn-accent" onclick="doFaucet()">FAUCET — 1,000 KMU 받기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 트랜잭션 로그 -->
+    <section>
+      <div class="section-head" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>트랜잭션 로그</span>
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="clearLog()">지우기</button>
+      </div>
+      <div class="tx-log" id="tx-log">
+        <div class="tx-item" style="color:var(--muted);">— 트랜잭션이 여기에 기록됩니다 —</div>
+      </div>
+    </section>
+
+    <!-- 제출 정보 -->
+    <section>
+      <div class="section-head">제출용 정보 (복사해서 제출)</div>
+      <div class="card">
+        <div style="font-family:var(--mono);font-size:12px;line-height:2;color:var(--muted);">
+          <div>Token Contract &nbsp;&nbsp;: <span id="sub-token" style="color:var(--text);">—</span></div>
+          <div>Staking Contract : <span id="sub-staking" style="color:var(--text);">—</span></div>
+          <div>Wallet Address &nbsp;&nbsp;: <span id="sub-wallet" style="color:var(--text);">—</span></div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;" />
+        <div id="sub-txs" style="font-family:var(--mono);font-size:12px;line-height:2;color:var(--muted);">
+          트랜잭션을 실행하면 여기에 해시가 표시됩니다.
+        </div>
+        <button class="btn" style="margin-top:14px;font-size:12px;" onclick="copySubmit()">제출 정보 복사</button>
+      </div>
+    </section>
+
+  </div><!-- /dapp-main -->
+</div><!-- /wrap -->
+
+<footer>
+  <div>Blockchain Lab #7 · Kookmin University · Prof. Hyoung Joong Kim · 2026.04.14</div>
+</footer>
+
+<!-- 토스트 -->
+<div id="toast"></div>
+
+<!-- ── 스크립트 ──────────────────────────────────── -->
+<script>
+// ── ABI ─────────────────────────────────────────────
+const TOKEN_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function faucet()",
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+];
+
+const STAKING_ABI = [
+  "function stake(uint256 amount)",
+  "function unstake(uint256 amount)",
+  "function claimReward()",
+  "function emergencyWithdraw()",
+  "function getStakeInfo(address user) view returns (uint256 stakedAmount, uint256 pendingReward, uint256 stakedSince, uint256 totalRewardEarned)",
+  "function totalStaked() view returns (uint256)",
+  "event Staked(address indexed user, uint256 amount, uint256 timestamp)",
+  "event Unstaked(address indexed user, uint256 amount, uint256 timestamp)",
+  "event RewardClaimed(address indexed user, uint256 reward, uint256 timestamp)",
+  "event EmergencyWithdraw(address indexed user, uint256 amount, uint256 timestamp)"
+];
+
+// ── 상태 ────────────────────────────────────────────
+let provider, signer, walletAddr;
+let tokenContract, stakingContract;
+let tokenAddr, stakingAddr;
+const submittedTxs = { deploy_token: null, deploy_staking: null, stake: null, unstake: null };
+
+// ── 유틸 ────────────────────────────────────────────
+function fmt(wei, dec = 18) {
+  if (!wei) return '0.000';
+  const n = parseFloat(ethers.formatUnits(wei, dec));
+  return n < 0.001 ? n.toFixed(8) : n.toFixed(3);
+}
+
+function short(addr) {
+  return addr ? addr.slice(0,6) + '...' + addr.slice(-4) : '';
+}
+
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 4000);
+}
+
+function addLog(tag, tagClass, msg, txHash) {
+  const log = document.getElementById('tx-log');
+  const item = document.createElement('div');
+  item.className = 'tx-item';
+  const link = txHash
+    ? `<a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank">${short(txHash)}</a>`
+    : '';
+  item.innerHTML = `<span class="tag ${tagClass}">${tag}</span>${msg} ${link}`;
+  if (log.children[0]?.style.color === 'var(--muted)' && log.children[0].textContent.includes('기록')) {
+    log.innerHTML = '';
+  }
+  log.prepend(item);
+  updateSubmitInfo(tag, txHash);
+}
+
+function clearLog() { document.getElementById('tx-log').innerHTML = '<div class="tx-item" style="color:var(--muted);">— 트랜잭션이 여기에 기록됩니다 —</div>'; }
+
+function updateSubmitInfo(tag, hash) {
+  if (!hash) return;
+  const el = document.getElementById('sub-txs');
+  const existing = el.textContent.includes('표시됩니다') ? '' : el.innerHTML;
+  el.innerHTML = existing + `<div>${tag.padEnd(12)} : <span style="color:var(--text);">${hash}</span></div>`;
+}
+
+function copySubmit() {
+  const t = document.getElementById('sub-token').textContent;
+  const s = document.getElementById('sub-staking').textContent;
+  const w = document.getElementById('sub-wallet').textContent;
+  const txs = document.getElementById('sub-txs').innerText;
+  const txt = `[Blockchain Lab #7 제출]\nToken Contract   : ${t}\nStaking Contract : ${s}\nWallet Address   : ${w}\n\n${txs}`;
+  navigator.clipboard.writeText(txt).then(() => toast('클립보드에 복사되었습니다!', 'success'));
+}
+
+// ── 탭 ──────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['stake','unstake','claim','emergency','faucet'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + name);
+  });
+  if (name === 'claim') refreshStats();
+}
+
+// ── 지갑 연결 ────────────────────────────────────────
+async function connectWallet() {
+  if (!window.ethereum) { toast('MetaMask가 설치되어 있지 않습니다.', 'error'); return; }
+  try {
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+    walletAddr = await signer.getAddress();
+
+    const net = await provider.getNetwork();
+    const netName = net.chainId === 11155111n ? 'Sepolia' : net.chainId === 5n ? 'Goerli' : `Chain ${net.chainId}`;
+
+    document.getElementById('btn-connect').style.display = 'none';
+    document.getElementById('wallet-addr').textContent = short(walletAddr);
+    document.getElementById('wallet-addr').style.display = 'inline';
+    document.getElementById('network-badge').textContent = netName;
+    document.getElementById('network-badge').style.display = 'inline';
+    document.getElementById('connect-banner').style.display = 'none';
+    document.getElementById('sub-wallet').textContent = walletAddr;
+
+    toast(`연결됨: ${short(walletAddr)}`, 'success');
+  } catch(e) { toast('연결 실패: ' + e.message, 'error'); }
+}
+
+// ── 컨트랙트 로드 ────────────────────────────────────
+async function loadContracts() {
+  if (!signer) { toast('먼저 지갑을 연결하세요.', 'error'); return; }
+  tokenAddr   = document.getElementById('inp-token').value.trim();
+  stakingAddr = document.getElementById('inp-staking').value.trim();
+  if (!ethers.isAddress(tokenAddr) || !ethers.isAddress(stakingAddr)) {
+    toast('올바른 컨트랙트 주소를 입력하세요.', 'error'); return;
+  }
+  try {
+    tokenContract   = new ethers.Contract(tokenAddr,   TOKEN_ABI,   signer);
+    stakingContract = new ethers.Contract(stakingAddr, STAKING_ABI, signer);
+    await tokenContract.symbol();
+    document.getElementById('dapp-main').style.display = 'block';
+    document.getElementById('addr-section').style.display = 'none';
+    document.getElementById('sub-token').textContent   = tokenAddr;
+    document.getElementById('sub-staking').textContent = stakingAddr;
+    await refreshStats();
+    toast('컨트랙트 로드 완료!', 'success');
+  } catch(e) { toast('컨트랙트 로드 실패: ' + e.message, 'error'); }
+}
+
+// ── 통계 갱신 ────────────────────────────────────────
+async function refreshStats() {
+  if (!tokenContract || !stakingContract) return;
+  try {
+    const [bal, info, total] = await Promise.all([
+      tokenContract.balanceOf(walletAddr),
+      stakingContract.getStakeInfo(walletAddr),
+      stakingContract.totalStaked()
+    ]);
+    document.getElementById('stat-balance').textContent      = fmt(bal);
+    document.getElementById('stat-staked').textContent       = fmt(info.stakedAmount);
+    document.getElementById('stat-reward').textContent       = fmt(info.pendingReward);
+    document.getElementById('stat-total-reward').textContent = fmt(info.totalRewardEarned);
+    document.getElementById('stat-total-staked').textContent = fmt(total);
+    document.getElementById('claim-preview').textContent     = fmt(info.pendingReward) + ' KMU';
+  } catch(e) { console.error(e); }
+}
+
+// ── STAKE ────────────────────────────────────────────
+async function doStake() {
+  if (!stakingContract) { toast('컨트랙트를 먼저 로드하세요.', 'error'); return; }
+  const amt = document.getElementById('inp-stake-amt').value;
+  if (!amt || Number(amt) <= 0) { toast('수량을 입력하세요.', 'error'); return; }
+  const amount = ethers.parseUnits(amt, 18);
+  try {
+    toast('<span class="spinner"></span> approve 트랜잭션 서명 중...', '');
+    const approveTx = await tokenContract.approve(stakingAddr, amount);
+    addLog('approve', 'tag-stake', `${amt} KMU 사용 허가`, approveTx.hash);
+    await approveTx.wait();
+    toast('<span class="spinner"></span> stake 트랜잭션 서명 중...', '');
+    const stakeTx = await stakingContract.stake(amount);
+    addLog('stake', 'tag-stake', `${amt} KMU 예치`, stakeTx.hash);
+    await stakeTx.wait();
+    toast(`✓ ${amt} KMU 스테이킹 완료!`, 'success');
+    await refreshStats();
+  } catch(e) { toast('오류: ' + (e.reason || e.message), 'error'); }
+}
+
+// ── UNSTAKE ──────────────────────────────────────────
+async function doUnstake() {
+  if (!stakingContract) { toast('컨트랙트를 먼저 로드하세요.', 'error'); return; }
+  const amt = document.getElementById('inp-unstake-amt').value;
+  if (!amt || Number(amt) <= 0) { toast('수량을 입력하세요.', 'error'); return; }
+  const amount = ethers.parseUnits(amt, 18);
+  try {
+    toast('<span class="spinner"></span> unstake 트랜잭션 서명 중...', '');
+    const tx = await stakingContract.unstake(amount);
+    addLog('unstake', 'tag-unstake', `${amt} KMU 출금`, tx.hash);
+    await tx.wait();
+    toast(`✓ ${amt} KMU 출금 완료!`, 'success');
+    await refreshStats();
+  } catch(e) { toast('오류: ' + (e.reason || e.message), 'error'); }
+}
+
+// ── CLAIM ────────────────────────────────────────────
+async function doClaim() {
+  if (!stakingContract) { toast('컨트랙트를 먼저 로드하세요.', 'error'); return; }
+  try {
+    toast('<span class="spinner"></span> claimReward 서명 중...', '');
+    const tx = await stakingContract.claimReward();
+    addLog('claim', 'tag-claim', '보상 수령', tx.hash);
+    await tx.wait();
+    toast('✓ 보상 수령 완료!', 'success');
+    await refreshStats();
+  } catch(e) { toast('오류: ' + (e.reason || e.message), 'error'); }
+}
+
+// ── EMERGENCY ────────────────────────────────────────
+async function doEmergency() {
+  if (!confirm('보상을 포기하고 원금 전액을 즉시 출금합니다. 계속하시겠습니까?')) return;
+  try {
+    toast('<span class="spinner"></span> emergencyWithdraw 서명 중...', '');
+    const tx = await stakingContract.emergencyWithdraw();
+    addLog('emergency', 'tag-emergency', '긴급 출금', tx.hash);
+    await tx.wait();
+    toast('✓ 긴급 출금 완료!', 'success');
+    await refreshStats();
+  } catch(e) { toast('오류: ' + (e.reason || e.message), 'error'); }
+}
+
+// ── FAUCET ───────────────────────────────────────────
+async function doFaucet() {
+  if (!tokenContract) { toast('컨트랙트를 먼저 로드하세요.', 'error'); return; }
+  try {
+    toast('<span class="spinner"></span> faucet 호출 중...', '');
+    const tx = await tokenContract.faucet();
+    addLog('faucet', 'tag-deploy', '1,000 KMU 수령', tx.hash);
+    await tx.wait();
+    toast('✓ 1,000 KMU를 받았습니다!', 'success');
+    await refreshStats();
+  } catch(e) { toast('오류: ' + (e.reason || e.message), 'error'); }
+}
+
+// ── 자동 갱신 (30초마다) ─────────────────────────────
+setInterval(() => { if (stakingContract) refreshStats(); }, 30000);
+</script>
+</body>
+</html>
